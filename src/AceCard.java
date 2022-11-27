@@ -11,11 +11,4 @@ public class AceCard extends Card {
         return this.cardType;
     }
 
-    public void skipTurn() {
-
-    }
-
-    public void stealPoints(Player toStealFrom) {
-
-    }
 }

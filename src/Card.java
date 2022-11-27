@@ -1,5 +1,6 @@
 public class Card {
     protected int cardPoints;
+    protected int cardEffect;
 
     public Card() {
         this.cardPoints = 1;
@@ -11,4 +12,5 @@ public class Card {
     public int cardNumber() {
         return this.cardPoints;
     }
+    public int cardEffect() {return this.cardEffect;}
 }
