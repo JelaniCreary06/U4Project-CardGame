@@ -3,104 +3,118 @@ import java.util.Scanner;
 
 public class GameRunner {
     public static void main(String[] args) {
-        final String COLOR_YELLOW = "\u001b[33m";
+        final Game GAME = new Game();
+        final String COLOR_YELLOW = "\u001b[33m", COLOR_WHITE = "\u001B[37m";
 
         Scanner scanner = new Scanner(System.in);
 
-        final Game GAME = new Game();
-        ArrayList<Player> playerList;
+        boolean gameOver = false;
 
         do {
-            int newPlrCount; boolean isAIactive = false;
+            ArrayList<String> initalizedNameList = new ArrayList();
+            int peoplePlaying = 0; boolean playWithAI;
 
-            System.out.print("Creating a new game.\n " + "" +
-                    "Input the amount of players (max is " + GAME.getMaxPlayers() + "):");
-            newPlrCount = scanner.nextInt();
+            while (peoplePlaying == 0) {
+                System.out.print("Creating a new game, input the amount of players." +
+                        "\nPlayers (Max is " + GAME.maxPlayers() + "): ");
+                peoplePlaying = scanner.nextInt();
 
-            if (newPlrCount > 1) {
-                System.out.println("Play with the AI? (y/n)");
-
-                if (scanner.nextLine().startsWith("y".toLowerCase()))
-                    isAIactive = true;
+                if (peoplePlaying <= 0) System.out.println("There MUST be at least 1 player.");
             }
 
-            GAME.newGame(newPlrCount, isAIactive);
-            System.out.println("The game will start in 3 seconds.");
+            if (peoplePlaying > 1) {
+                System.out.println("Play with the games AI active? (y/n): ");
+
+                String answer = scanner.nextLine();
+
+                while(!scanner.hasNextLine()) {
+                    try {
+                        Thread.sleep(1000);
+                    } catch (InterruptedException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+
+                answer = scanner.nextLine();
+
+                if (answer.toLowerCase().startsWith("y")) playWithAI = true;
+                else playWithAI = false;
+            } else playWithAI = true;
+
+            System.out.print("\n");
+
+            if (peoplePlaying > 1) {
+                for (int i = 0; i < peoplePlaying; i++) {
+                    System.out.println("Set a name for Player " + (i+1) + "?"
+                            + "\nType \"0\" to cancel. (Will call you by number)\nEnter name:");
+
+                    String name = scanner.nextLine();
+
+                    if (!(name.equals("0"))) initalizedNameList.add(name);
+                    else {
+                        initalizedNameList.add("Player " + (i+1));
+                        initalizedNameList.add("Player 0 (AI)");
+                    }
+                }
+            } else initalizedNameList.add("Player " + peoplePlaying);
+
+            boolean readyToContinue = false;
+
+            readyToContinue = GAME.initalizePlayers(peoplePlaying, playWithAI, initalizedNameList);
+
+            while (!readyToContinue) {
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+
+            System.out.println("The game has been initialized!\nStarting now.\n");
 
             try {
-                Thread.sleep(3000);
+                Thread.sleep(1000);
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }
 
-            GAME.assignCards();
-            playerList = GAME.getPlayerList();
+            ArrayList<Player> playerList = GAME.getPlayers();
+            Player gameAI = GAME.AI();
 
-            for (Player player : playerList) {
-                if (!(player.player == 0)) {
-                    System.out.print("\nSet a name for Player " + player.player + " ?" +
-                            "\n Enter a name, or \"0\" for no name.\n" +
-                            "Enter name here: ");
+            for (int i = GAME.currentRound(); i < GAME.maxRounds(); GAME.incRound()) {
+                System.out.println("\n" + COLOR_WHITE + "Starting Round " + GAME.currentRound());
 
-                    if (scanner.hasNextInt() && (scanner.nextInt() == 0) )
-                        player.setName("Player " + player.player);
-                    else player.setName("" + scanner.nextLine());
-                }
-            }
-            int maxRounds = GAME.getMaxRounds(), firstRound = GAME.getCurrentRound();
-
-            while (GAME.getCurrentRound() < GAME.getMaxRounds()) {
                 for (Player player : playerList) {
-                    String playerName = player.name;
-                    if (player.player == 0) playerName = "Player 0 (AI)";
+                    System.out.print("\n" +
+                            COLOR_YELLOW +player.name() + "'s Turn" +
+                            player.viewCards() + "\nCard to play: "
+                            );
+                    boolean inputtedCard = false;
 
-                    if (GAME.skipper != null) {
-                        System.out.println(playerName + " has been skipped " +
-                                "by " + GAME.skipper.name + "!");
-                        GAME.skipper = null;
-                        GAME.isSkipActive = false;
-                    }
-                    else {
-
-                        System.out.println(COLOR_YELLOW +
-                                playerName + "'s Turn" +
-                                GAME.viewPlayerCards(player));
-                        System.out.print("Card to play: ");
-
-
-                        if (player.player == 0) {
-                            System.out.print(GAME.playCardAI(player));
-                        } else {
-                            boolean inputNowValid = false;
-
-                            do {
-                                inputNowValid = GAME.playCard(scanner.nextLine(), player);
-                            } while (!inputNowValid);
+                    if (player == gameAI) {
+                        try {
+                            Thread.sleep(1000);
+                        } catch (InterruptedException e) {
+                            throw new RuntimeException(e);
                         }
 
-                        while (!scanner.hasNextLine() || !scanner.hasNextInt()) {
-                            try {
-                                Thread.sleep(1000);
-                            } catch (InterruptedException e) {
-                                throw new RuntimeException(e);
-                            }
-                        }
-
-                        System.out.print("\n");
-
+                        System.out.println(GAME.playCard(player));
+                        inputtedCard = true;
                     }
+                    else inputtedCard = GAME.playCard(scanner.nextInt(), player);
+
+                    while(!inputtedCard) {
+                        try {
+                            Thread.sleep(1000);
+                        } catch (InterruptedException e) {
+                            throw new RuntimeException(e);
+                        }
+                    }
+
                 }
-                System.out.println("\nEnd of round " + firstRound);
-                firstRound++;
             }
 
-            System.out.print(GAME.toString());
-            GAME.endGame();
 
-            System.out.println("That was a fun game!\n" +
-                    "Want to play again? (y/n): ");
-            if (scanner.nextLine().startsWith("y".toLowerCase()))
-                GAME.isGameOver = true;
-        } while (!GAME.isGameOver);
+        } while (!gameOver);
     }
 }

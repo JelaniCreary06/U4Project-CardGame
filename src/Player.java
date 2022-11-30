@@ -1,67 +1,98 @@
 import java.util.*;
 
 public class Player {
-    protected Game activeGame;
-    protected int player, playerPoints = 0;
-    protected String name;
+    final String COLOR_GREEN = "\u001B[32m", COLOR_RED = "\u001B[31m", COLOR_CYAN = "\u001B[36m";
 
-    protected ArrayList<Card> cardArrayList = new ArrayList<Card>();
-    protected ArrayList<AceCard> aceCardArrayList = new ArrayList<AceCard>();
-
-    public Player(int player, Game activeGame) {
-        this.player = player;
-        this.activeGame = activeGame;
-        this.name = "Player " + this.player;
-    }
-
-    public Player(int player, Game activeGame, String name) {
-        this.player = player;
-        this.activeGame = activeGame;
+    ArrayList<Card> cardList = new ArrayList<>();
+    private String name;
+    private int points;
+    public Player(String name) {
         this.name = name;
     }
 
-    public Hashtable<String, ArrayList> getPlayerCards() {
-        return new Hashtable<>(
-                Map.of(
-                        "Cards", cardArrayList,
-                        "AceCards", aceCardArrayList
-                )
-        );
+    public String viewCards() {
+        String toReturn = "\n";
+
+        for (Card card : cardList) {
+            toReturn += COLOR_GREEN + "------- ";
+        }
+
+        toReturn += "\n";
+
+        for (Card card : cardList) {
+            toReturn +=
+                   COLOR_GREEN +  "| "
+                           + COLOR_RED + card.type() + "." + COLOR_CYAN + card.position() +
+                           COLOR_GREEN + " | ";
+        }
+
+        toReturn += "\n";
+
+        for (Card card : cardList) {
+            toReturn += COLOR_GREEN + "------- ";
+        }
+
+        return toReturn;
     }
 
-    public int getAceCardCount() {
-        return aceCardArrayList.size();
+
+    public void sortCards() {
+        ArrayList<Card> sortedCardList = new ArrayList<>();
+
+        int cardIncrement = 0;
+
+        for (Card card : cardList) {
+            if (card.type().equals("A")) {
+                sortedCardList.add(0, card);
+                card.setPosition(cardIncrement);
+                cardIncrement++;
+            }
+        }
+
+        for (Card card : cardList) {
+            if (card.type().equals("+")) {
+                sortedCardList.add(sortedCardList.size(),card);
+                card.setPosition(cardIncrement);
+                cardIncrement++;
+            }
+        }
+
+        for (Card card : cardList) {
+            if (card.type().equals("-")) {
+                sortedCardList.add(sortedCardList.size(), card);
+                card.setPosition(cardIncrement);
+                cardIncrement++;
+            }
+        }
+
+
+        cardList = sortedCardList;
     }
 
-    public int getCardCount() {
-        return cardArrayList.size();
+    public String name() {
+        return this.name;
     }
 
-    public void addPoints(int points) {
-        this.playerPoints += points;
+    public int points() {
+        return this.points;
     }
 
     public void removePoints(int points) {
-        this.playerPoints -= points;
+        this.points -= points;
     }
 
-    public int getPoints() {return this.playerPoints;}
+    public void addPoints(int points) {
+        this.points += points;
+    }
 
+    public ArrayList cardList() {
+        return this.cardList;
+    }
     public void addCard(Card card) {
-        cardArrayList.add(card);
+        cardList.add(card);
     }
 
     public void removeCard(Card card) {
-        cardArrayList.remove(card);
+        cardList.remove(card);
     }
-
-    public void addAceCard(AceCard aceCard) {
-        aceCardArrayList.add(aceCard);
-    }
-
-    public void removeAceCard(AceCard aceCard) {
-        aceCardArrayList.remove(aceCard);
-    }
-
-    public void setName(String name) {this.name = name;}
 }
