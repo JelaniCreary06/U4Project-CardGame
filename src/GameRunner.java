@@ -10,6 +10,23 @@ public class GameRunner {
 
         boolean gameOver = false;
 
+        System.out.println(
+                "The Objective of this game is to gain the most points by the end of the rounds!" +
+                        "\nGain points by using cards." +
+                        "\n Cards with \"A\" are Ability cards, they either skip rounds, add or subtract points" +
+                        " from everyone except you (abilities are random.)" +
+                        "\n Cards with \"+\" or \"-\" either add or subtract points."
+                        + "To play a card, input the cards number, which is the cyan (blue) number within the card." +
+                        "\n You can't view your points, or abilities, the winner is outputted at the end."
+                        + "\n\n The game will start in 5 seconds!"
+        );
+
+        try {
+            Thread.sleep(5000);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+
         do {
             ArrayList<String> initalizedNameList = new ArrayList();
             int peoplePlaying = 0; boolean playWithAI;
@@ -20,6 +37,7 @@ public class GameRunner {
                 peoplePlaying = scanner.nextInt();
 
                 if (peoplePlaying <= 0) System.out.println("There MUST be at least 1 player.");
+                else if (peoplePlaying > GAME.maxPlayers()) peoplePlaying = 0;
             }
 
             if (peoplePlaying > 1) {
@@ -81,40 +99,66 @@ public class GameRunner {
             ArrayList<Player> playerList = GAME.getPlayers();
             Player gameAI = GAME.AI();
 
-            for (int i = GAME.currentRound(); i < GAME.maxRounds(); GAME.incRound()) {
+            for (int i = GAME.currentRound(); i < GAME.maxRounds(); i++) {
                 System.out.println("\n" + COLOR_WHITE + "Starting Round " + GAME.currentRound());
 
                 for (Player player : playerList) {
-                    System.out.print("\n" +
-                            COLOR_YELLOW +player.name() + "'s Turn" +
-                            player.viewCards() + "\nCard to play: "
-                            );
-                    boolean inputtedCard = false;
 
-                    if (player == gameAI) {
-                        try {
-                            Thread.sleep(1000);
-                        } catch (InterruptedException e) {
-                            throw new RuntimeException(e);
+                    if (GAME.isSkipActive()) {
+                        Player skipper = GAME.playerWhoSkipped();
+
+                        System.out.println("\n" + player.name() + " you've been skipped by " + skipper.name());
+                        GAME.skipOver();
+                    } else {
+
+                        System.out.print("\n" +
+                                COLOR_YELLOW +player.name() + "'s Turn" +
+                                player.viewCards() + "\nCard to play: "
+                        );
+                        boolean inputtedCard = false;
+
+                        if (player == gameAI) {
+                            try {
+                                Thread.sleep(1000);
+                            } catch (InterruptedException e) {
+                                throw new RuntimeException(e);
+                            }
+
+                            System.out.println(GAME.playCard(player));
+                            inputtedCard = true;
+                        }
+                        else inputtedCard = GAME.playCard(scanner.nextInt(), player);
+
+                        while(!inputtedCard) {
+                            try {
+                                Thread.sleep(1000);
+                            } catch (InterruptedException e) {
+                                throw new RuntimeException(e);
+                            }
                         }
 
-                        System.out.println(GAME.playCard(player));
-                        inputtedCard = true;
-                    }
-                    else inputtedCard = GAME.playCard(scanner.nextInt(), player);
-
-                    while(!inputtedCard) {
-                        try {
-                            Thread.sleep(1000);
-                        } catch (InterruptedException e) {
-                            throw new RuntimeException(e);
-                        }
                     }
 
                 }
             }
 
+            System.out.println(GAME.toString() + "\nGood game!");
+            System.out.print("Play again? (y/n): ");
+            GAME.clear();
 
+            String answer = scanner.nextLine();
+
+            while(!scanner.hasNextLine()) {
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+
+            answer = scanner.nextLine();
+
+            if (answer.toLowerCase().startsWith("n")) gameOver = true;
         } while (!gameOver);
     }
 }
